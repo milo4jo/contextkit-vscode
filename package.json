@@ -1,0 +1,94 @@
+{
+  "name": "contextkit",
+  "displayName": "ContextKit",
+  "description": "Smart context selection for AI coding assistants",
+  "version": "0.1.0",
+  "publisher": "milo4jo",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/milo4jo/contextkit-vscode"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Machine Learning"
+  ],
+  "keywords": [
+    "ai",
+    "context",
+    "claude",
+    "copilot",
+    "cursor",
+    "llm",
+    "code search"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "contextkit.selectContext",
+        "title": "ContextKit: Find Relevant Code"
+      },
+      {
+        "command": "contextkit.selectContextFromSelection",
+        "title": "ContextKit: Find Related Code"
+      },
+      {
+        "command": "contextkit.indexWorkspace",
+        "title": "ContextKit: Index Workspace"
+      },
+      {
+        "command": "contextkit.showStatus",
+        "title": "ContextKit: Show Status"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "contextkit.selectContextFromSelection",
+          "when": "editorHasSelection",
+          "group": "contextkit"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "ContextKit",
+      "properties": {
+        "contextkit.defaultBudget": {
+          "type": "number",
+          "default": 8000,
+          "description": "Default token budget for context selection"
+        },
+        "contextkit.autoIndex": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically index workspace on open"
+        },
+        "contextkit.cliPath": {
+          "type": "string",
+          "default": "contextkit",
+          "description": "Path to contextkit CLI (if not in PATH)"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.22.0",
+    "typescript": "^5.3.0"
+  }
+}
