@@ -2,60 +2,55 @@
 
 > Smart context selection for AI coding assistants
 
-Find the right code for your AI prompts — without pasting your entire codebase.
+Find the right code context for any query — without leaving your editor.
 
 ## Features
 
-### 🔍 Find Relevant Code
-`Cmd/Ctrl+Shift+P` → "ContextKit: Find Relevant Code"
+| Command | Shortcut | Description |
+|---------|----------|-------------|
+| **Find Context** | `Cmd+Shift+K` | Semantic search for relevant code |
+| **Find Related** | `Cmd+Shift+L` | Find code related to selection |
+| **Find Symbol** | `Cmd+Shift+;` | Search by function/class name |
+| **Call Graph** | Command Palette | Show callers/callees |
+| **Codebase Map** | Command Palette | Get structure overview |
+| **Index Workspace** | Command Palette | Build/update index |
 
-Enter a natural language query like "how does authentication work" and get the most relevant code snippets.
+## Quick Start
 
-### 📋 Find Related Code (Right-Click)
-Select code in your editor, right-click → "ContextKit: Find Related Code"
-
-Instantly find code related to your selection.
-
-### 📊 Auto-Indexing
-ContextKit automatically indexes your workspace on open. Incremental updates keep the index fresh.
+1. Install the extension
+2. Open Command Palette (`Cmd+Shift+P`)
+3. Run "ContextKit: Index Workspace"
+4. Use `Cmd+Shift+K` to search
 
 ## Requirements
 
-- [ContextKit CLI](https://github.com/milo4jo/contextkit) must be installed:
-  ```bash
-  npm install -g @milo4jo/contextkit
-  ```
+- [ContextKit CLI](https://www.npmjs.com/package/@milo4jo/contextkit)
 
-## Extension Settings
+```bash
+npm install -g @milo4jo/contextkit
+```
+
+## Settings
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `contextkit.defaultBudget` | 8000 | Default token budget for context selection |
-| `contextkit.autoIndex` | true | Automatically index workspace on open |
-| `contextkit.cliPath` | contextkit | Path to contextkit CLI |
-
-## Commands
-
-| Command | Description |
-|---------|-------------|
-| ContextKit: Find Relevant Code | Search for code by natural language query |
-| ContextKit: Find Related Code | Find code related to selection |
-| ContextKit: Index Workspace | Re-index the workspace |
-| ContextKit: Show Status | Show indexing status |
+| `contextkit.defaultBudget` | 8000 | Token limit for results |
+| `contextkit.autoIndex` | false | Auto-index on open |
+| `contextkit.cliPath` | contextkit | Path to CLI |
+| `contextkit.showNotifications` | true | Show copy notifications |
 
 ## How It Works
 
-1. **Indexes your codebase** — Breaks code into semantic chunks
-2. **Creates embeddings** — Converts code to vectors (locally, no API)
-3. **Semantic search** — Finds code by meaning, not just keywords
-4. **Copies to clipboard** — Ready to paste into Claude, ChatGPT, etc.
+1. ContextKit indexes your codebase locally (nothing leaves your machine)
+2. When you search, it finds semantically relevant code chunks
+3. Results are copied to clipboard — paste into Claude, GPT, or any LLM
 
 ## Links
 
 - [ContextKit CLI](https://github.com/milo4jo/contextkit)
-- [Documentation](https://contextkit-site.vercel.app)
+- [Documentation](https://contextkit-site.vercel.app/docs)
 - [Report Issues](https://github.com/milo4jo/contextkit-vscode/issues)
 
 ---
 
-Built by [Milo](https://milo-site-self.vercel.app) 🦊
+Built by [Milo](https://github.com/milo4jo) 🦊

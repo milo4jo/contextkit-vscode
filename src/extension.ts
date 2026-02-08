@@ -17,6 +17,9 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('contextkit.selectContext', selectContext),
     vscode.commands.registerCommand('contextkit.selectContextFromSelection', selectContextFromSelection),
+    vscode.commands.registerCommand('contextkit.findSymbol', findSymbol),
+    vscode.commands.registerCommand('contextkit.showCallGraph', showCallGraph),
+    vscode.commands.registerCommand('contextkit.getCodebaseMap', getCodebaseMap),
     vscode.commands.registerCommand('contextkit.indexWorkspace', indexWorkspace),
     vscode.commands.registerCommand('contextkit.showStatus', showStatus)
   );
@@ -275,6 +278,152 @@ async function silentCheckAndIndex() {
     if (action === 'Index Now') {
       await indexWorkspace();
     }
+  }
+}
+
+async function findSymbol() {
+  const workspacePath = await getWorkspacePath();
+  if (!workspacePath) {
+    vscode.window.showWarningMessage('Open a folder first');
+    return;
+  }
+
+  const symbolName = await vscode.window.showInputBox({
+    prompt: 'Symbol name to search for',
+    placeHolder: 'e.g., UserService, handleAuth, parseConfig...',
+    ignoreFocusOut: true
+  });
+
+  if (!symbolName?.trim()) return;
+
+  showStatusBar('$(sync~spin) Searching...', 'Finding symbols');
+
+  try {
+    const result = await runContextKit(
+      ['symbol', symbolName.trim()],
+      workspacePath
+    );
+
+    if (!result.trim()) {
+      hideStatusBar();
+      vscode.window.showWarningMessage(`No symbols found matching "${symbolName}"`);
+      return;
+    }
+
+    const doc = await vscode.workspace.openTextDocument({
+      content: result,
+      language: 'markdown'
+    });
+    await vscode.window.showTextDocument(doc, { preview: true });
+    
+    await vscode.env.clipboard.writeText(result);
+    hideStatusBar();
+    notify('Symbol results copied to clipboard');
+    
+  } catch (error) {
+    hideStatusBar();
+    handleError(error, workspacePath);
+  }
+}
+
+async function showCallGraph() {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    vscode.window.showWarningMessage('Open a file first');
+    return;
+  }
+
+  const workspacePath = await getWorkspacePath();
+  if (!workspacePath) return;
+
+  // Try to get function name from cursor position or selection
+  let functionName: string | undefined;
+  
+  const selection = editor.document.getText(editor.selection);
+  if (selection?.trim()) {
+    // Use selected text as function name
+    functionName = selection.trim().split(/[\s(]/)[0];
+  } else {
+    // Ask for function name
+    functionName = await vscode.window.showInputBox({
+      prompt: 'Function name to analyze',
+      placeHolder: 'e.g., handlePayment, validateUser...',
+      ignoreFocusOut: true
+    });
+  }
+
+  if (!functionName?.trim()) return;
+
+  showStatusBar('$(sync~spin) Analyzing...', 'Building call graph');
+
+  try {
+    const result = await runContextKit(
+      ['graph', functionName.trim()],
+      workspacePath
+    );
+
+    if (!result.trim() || result.includes('No call relationships')) {
+      hideStatusBar();
+      vscode.window.showWarningMessage(`No call graph found for "${functionName}"`);
+      return;
+    }
+
+    const doc = await vscode.workspace.openTextDocument({
+      content: result,
+      language: 'markdown'
+    });
+    await vscode.window.showTextDocument(doc, { preview: true });
+    
+    hideStatusBar();
+    notify('Call graph generated');
+    
+  } catch (error) {
+    hideStatusBar();
+    handleError(error, workspacePath);
+  }
+}
+
+async function getCodebaseMap() {
+  const workspacePath = await getWorkspacePath();
+  if (!workspacePath) {
+    vscode.window.showWarningMessage('Open a folder first');
+    return;
+  }
+
+  const query = await vscode.window.showInputBox({
+    prompt: 'What part of the codebase? (leave empty for full map)',
+    placeHolder: 'e.g., authentication, API routes, or leave empty',
+    ignoreFocusOut: true
+  });
+
+  showStatusBar('$(sync~spin) Mapping...', 'Generating codebase map');
+
+  try {
+    const args = query?.trim() 
+      ? ['select', query.trim(), '--mode', 'map', '--budget', '16000']
+      : ['select', 'codebase overview', '--mode', 'map', '--budget', '16000'];
+    
+    const result = await runContextKit(args, workspacePath);
+
+    if (!result.trim()) {
+      hideStatusBar();
+      vscode.window.showWarningMessage('Could not generate map. Try indexing first.');
+      return;
+    }
+
+    const doc = await vscode.workspace.openTextDocument({
+      content: `# Codebase Map\n\n${result}`,
+      language: 'markdown'
+    });
+    await vscode.window.showTextDocument(doc, { preview: true });
+    
+    await vscode.env.clipboard.writeText(result);
+    hideStatusBar();
+    notify('Codebase map copied to clipboard');
+    
+  } catch (error) {
+    hideStatusBar();
+    handleError(error, workspacePath);
   }
 }
 

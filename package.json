@@ -2,7 +2,7 @@
   "name": "contextkit",
   "displayName": "ContextKit",
   "description": "Smart context selection for AI coding assistants",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "milo4jo",
   "repository": {
     "type": "git",
@@ -45,6 +45,24 @@
         "icon": "$(references)"
       },
       {
+        "command": "contextkit.findSymbol",
+        "title": "Find Symbol",
+        "category": "ContextKit",
+        "icon": "$(symbol-method)"
+      },
+      {
+        "command": "contextkit.showCallGraph",
+        "title": "Show Call Graph",
+        "category": "ContextKit",
+        "icon": "$(type-hierarchy)"
+      },
+      {
+        "command": "contextkit.getCodebaseMap",
+        "title": "Get Codebase Map",
+        "category": "ContextKit",
+        "icon": "$(list-tree)"
+      },
+      {
         "command": "contextkit.indexWorkspace",
         "title": "Index Workspace",
         "category": "ContextKit",
@@ -69,6 +87,12 @@
         "key": "ctrl+shift+l",
         "mac": "cmd+shift+l",
         "when": "editorTextFocus && editorHasSelection"
+      },
+      {
+        "command": "contextkit.findSymbol",
+        "key": "ctrl+shift+;",
+        "mac": "cmd+shift+;",
+        "when": "editorTextFocus"
       }
     ],
     "menus": {
