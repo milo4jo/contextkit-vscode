@@ -22,7 +22,9 @@
     "copilot",
     "cursor",
     "llm",
-    "code search"
+    "code search",
+    "semantic search",
+    "rag"
   ],
   "activationEvents": [
     "onStartupFinished"
@@ -32,19 +34,41 @@
     "commands": [
       {
         "command": "contextkit.selectContext",
-        "title": "ContextKit: Find Relevant Code"
+        "title": "Find Context",
+        "category": "ContextKit",
+        "icon": "$(search)"
       },
       {
         "command": "contextkit.selectContextFromSelection",
-        "title": "ContextKit: Find Related Code"
+        "title": "Find Related Code",
+        "category": "ContextKit",
+        "icon": "$(references)"
       },
       {
         "command": "contextkit.indexWorkspace",
-        "title": "ContextKit: Index Workspace"
+        "title": "Index Workspace",
+        "category": "ContextKit",
+        "icon": "$(database)"
       },
       {
         "command": "contextkit.showStatus",
-        "title": "ContextKit: Show Status"
+        "title": "Show Status",
+        "category": "ContextKit",
+        "icon": "$(info)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "contextkit.selectContext",
+        "key": "ctrl+shift+k",
+        "mac": "cmd+shift+k",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "contextkit.selectContextFromSelection",
+        "key": "ctrl+shift+l",
+        "mac": "cmd+shift+l",
+        "when": "editorTextFocus && editorHasSelection"
       }
     ],
     "menus": {
@@ -52,7 +76,17 @@
         {
           "command": "contextkit.selectContextFromSelection",
           "when": "editorHasSelection",
-          "group": "contextkit"
+          "group": "1_contextkit"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "contextkit.selectContext",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "contextkit.selectContextFromSelection",
+          "when": "editorHasSelection"
         }
       ]
     },
@@ -62,17 +96,24 @@
         "contextkit.defaultBudget": {
           "type": "number",
           "default": 8000,
-          "description": "Default token budget for context selection"
+          "description": "Default token budget for context selection",
+          "minimum": 1000,
+          "maximum": 100000
         },
         "contextkit.autoIndex": {
           "type": "boolean",
-          "default": true,
-          "description": "Automatically index workspace on open"
+          "default": false,
+          "description": "Automatically index workspace on open (can be slow for large projects)"
         },
         "contextkit.cliPath": {
           "type": "string",
           "default": "contextkit",
           "description": "Path to contextkit CLI (if not in PATH)"
+        },
+        "contextkit.showNotifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show notifications when context is copied"
         }
       }
     }
