@@ -1,8 +1,5 @@
 import * as vscode from 'vscode';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
+import { spawn } from 'child_process';
 
 let outputChannel: vscode.OutputChannel;
 let statusBarItem: vscode.StatusBarItem;
@@ -37,7 +34,15 @@ export function activate(context: vscode.ExtensionContext) {
 
 async function getCliPath(): Promise<string> {
   const config = vscode.workspace.getConfiguration('contextkit');
-  return config.get('cliPath') || 'contextkit';
+  const cliPath = config.get<string>('cliPath') || 'contextkit';
+  
+  // Security: Validate CLI path doesn't contain suspicious characters
+  // Users configure their own machine, but we still sanitize
+  if (/[;&|`$]/.test(cliPath)) {
+    throw new Error('Invalid CLI path: contains shell metacharacters');
+  }
+  
+  return cliPath;
 }
 
 async function getWorkspacePath(): Promise<string | undefined> {
@@ -51,21 +56,45 @@ async function getWorkspacePath(): Promise<string | undefined> {
 
 async function runContextKit(args: string[], cwd: string): Promise<string> {
   const cli = await getCliPath();
-  const command = `${cli} ${args.join(' ')}`;
   
-  outputChannel.appendLine(`Running: ${command}`);
+  // Security: Use spawn with explicit args array to prevent shell injection
+  outputChannel.appendLine(`Running: ${cli} ${args.join(' ')}`);
   
-  try {
-    const { stdout, stderr } = await execAsync(command, { cwd, maxBuffer: 10 * 1024 * 1024 });
-    if (stderr) {
-      outputChannel.appendLine(`stderr: ${stderr}`);
-    }
-    return stdout;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    outputChannel.appendLine(`Error: ${message}`);
-    throw error;
-  }
+  return new Promise((resolve, reject) => {
+    const proc = spawn(cli, args, { 
+      cwd, 
+      shell: false,  // Important: no shell = no injection
+      env: { ...process.env }
+    });
+    
+    let stdout = '';
+    let stderr = '';
+    
+    proc.stdout.on('data', (data: Buffer) => {
+      stdout += data.toString();
+    });
+    
+    proc.stderr.on('data', (data: Buffer) => {
+      stderr += data.toString();
+    });
+    
+    proc.on('close', (code: number | null) => {
+      if (stderr) {
+        outputChannel.appendLine(`stderr: ${stderr}`);
+      }
+      
+      if (code === 0) {
+        resolve(stdout);
+      } else {
+        reject(new Error(stderr || `Process exited with code ${code}`));
+      }
+    });
+    
+    proc.on('error', (error: Error) => {
+      outputChannel.appendLine(`Error: ${error.message}`);
+      reject(error);
+    });
+  });
 }
 
 async function selectContext() {
@@ -85,8 +114,9 @@ async function selectContext() {
   statusBarItem.text = '$(sync~spin) Finding context...';
 
   try {
+    // Note: No quotes needed - spawn handles args safely without shell
     const result = await runContextKit(
-      ['select', `"${query}"`, '--budget', String(budget), '--format', 'markdown'],
+      ['select', query, '--budget', String(budget), '--format', 'markdown'],
       workspacePath
     );
 
@@ -143,11 +173,12 @@ async function selectContextFromSelection() {
   statusBarItem.text = '$(sync~spin) Finding related code...';
 
   try {
-    // Use the selection as the query
+    // Use the selection as the query (truncated for safety)
     const query = `Code related to: ${selection.slice(0, 500)}`;
     
+    // Note: No quotes needed - spawn handles args safely without shell
     const result = await runContextKit(
-      ['select', `"${query}"`, '--budget', String(budget), '--format', 'markdown'],
+      ['select', query, '--budget', String(budget), '--format', 'markdown'],
       workspacePath
     );
 
